@@ -1,0 +1,12 @@
+{
+  "username":"mudit",
+  "password":"checkhaven",
+  "algorithm":"HS512",
+  "expiresIn":"1h",
+  "issueRefreshToken":true
+}
+username, password, secretMessage
+
+Mudit Bhardwaj
+18:10
+refreshToken
