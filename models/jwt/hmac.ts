@@ -1,6 +1,26 @@
 "use strict";
 
 import * as crypto from "crypto";
+import {
+  base64urlEncode,
+  base64urlDecode,
+  parseTimespan,
+  safeJsonParse,
+  JsonWebTokenError,
+  TokenExpiredError,
+  NotBeforeError,
+  JwtHeader,
+  JwtPayload,
+  BaseSignOptions,
+  BaseVerifyOptions,
+  DecodeOptions,
+  CompleteDecodedJwt,
+  validateTimeClaims,
+  validateStandardClaims,
+  buildPayload,
+  buildHeader,
+  parseJwtToken,
+} from "./utils";
 
 // Map JWT alg → Node crypto HMAC algorithm
 const SUPPORTED_ALGS = {
@@ -11,156 +31,14 @@ const SUPPORTED_ALGS = {
 
 export type HmacAlg = keyof typeof SUPPORTED_ALGS;
 
-export interface JwtHeader {
-  alg: HmacAlg | string;
-  typ?: string;
-  kid?: string;
-  [key: string]: any;
-}
-
-export interface JwtPayload {
-  iss?: string;
-  sub?: string;
-  aud?: string | string[];
-  exp?: number;
-  nbf?: number;
-  iat?: number;
-  jti?: string;
-  [key: string]: any;
-}
-
-export interface SignOptions {
+export interface SignOptions extends BaseSignOptions {
   algorithm?: HmacAlg;
-  expiresIn?: number | string;
-  notBefore?: number | string;
-  issuer?: string;
-  subject?: string;
-  audience?: string | string[];
-  jwtid?: string;
-  noTimestamp?: boolean;
-  header?: Record<string, any>;
-  keyid?: string;
-  clockTimestamp?: number; // seconds since epoch
 }
 
-export interface VerifyOptions {
+export interface VerifyOptions extends BaseVerifyOptions {
   algorithms?: HmacAlg[];
-  issuer?: string | string[];
-  subject?: string;
-  audience?: string | string[];
-  clockTimestamp?: number;
-  clockTolerance?: number; // seconds
-  maxAge?: number | string;
 }
 
-export interface DecodeOptions {
-  complete?: boolean;
-}
-
-export interface CompleteDecodedJwt {
-  header: JwtHeader;
-  payload: JwtPayload;
-  signature: string | null;
-}
-
-/**
- * Base64URL encode a Buffer
- */
-export function base64urlEncode(buffer: Buffer): string {
-  return buffer
-    .toString("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}
-
-/**
- * Base64URL decode to Buffer
- */
-export function base64urlDecode(str: string): Buffer {
-  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  const pad = 4 - (base64.length % 4);
-  if (pad !== 4) {
-    base64 += "=".repeat(pad);
-  }
-  return Buffer.from(base64, "base64");
-}
-
-/**
- * Parse a timespan like:
- *  - number (seconds)
- *  - "60" (seconds)
- *  - "10s", "5m", "2h", "7d"
- */
-export function parseTimespan(value: number | string): number {
-  if (typeof value === "number") return value;
-  if (typeof value === "string" && /^\d+$/.test(value)) {
-    // plain number in seconds
-    return parseInt(value, 10);
-  }
-
-  const match = /^(\d+)([smhd])$/.exec(value || "");
-  if (!match) {
-    throw new TypeError("Invalid timespan format: " + value);
-  }
-
-  const amount = parseInt(match[1], 10);
-  const unit = match[2];
-
-  switch (unit) {
-    case "s":
-      return amount;
-    case "m":
-      return amount * 60;
-    case "h":
-      return amount * 60 * 60;
-    case "d":
-      return amount * 60 * 60 * 24;
-    default:
-      throw new TypeError("Unsupported timespan unit: " + unit);
-  }
-}
-
-/**
- * Safe JSON parse helper
- */
-function safeJsonParse<T = any>(str: string): T {
-  try {
-    return JSON.parse(str) as T;
-  } catch (err: any) {
-    throw new JsonWebTokenError("Invalid JSON in token: " + err.message);
-  }
-}
-
-/**
- * Errors similar to jsonwebtoken
- */
-export class JsonWebTokenError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "JsonWebTokenError";
-  }
-}
-
-export class TokenExpiredError extends JsonWebTokenError {
-  expiredAt: Date;
-
-  constructor(message: string, expiredAt: Date) {
-    super(message);
-    this.name = "TokenExpiredError";
-    this.expiredAt = expiredAt;
-  }
-}
-
-export class NotBeforeError extends JsonWebTokenError {
-  date: Date;
-
-  constructor(message: string, date: Date) {
-    super(message);
-    this.name = "NotBeforeError";
-    this.date = date;
-  }
-}
 
 /**
  * Create HMAC signature
@@ -217,52 +95,8 @@ export function sign(
     throw new JsonWebTokenError("Unsupported algorithm: " + algorithm);
   }
 
-  const now =
-    typeof options.clockTimestamp === "number"
-      ? options.clockTimestamp
-      : Math.floor(Date.now() / 1000);
-
-  const header: JwtHeader = Object.assign(
-    {
-      alg: algorithm,
-      typ: "JWT",
-    },
-    options.header || {}
-  );
-
-  if (options.keyid) {
-    header.kid = options.keyid;
-  }
-
-  // Clone payload so we don't mutate the original
-  const payloadCopy: JwtPayload =
-    typeof payload === "object" && payload !== null
-      ? { ...payload }
-      : ({} as JwtPayload);
-
-  if (typeof payloadCopy !== "object" || payloadCopy === null) {
-    throw new JsonWebTokenError("Payload must be a non-null object");
-  }
-
-  // Set standard claims from options if not already present
-  if (options.issuer) payloadCopy.iss = options.issuer;
-  if (options.subject) payloadCopy.sub = options.subject;
-  if (options.audience) payloadCopy.aud = options.audience;
-  if (options.jwtid) payloadCopy.jti = options.jwtid;
-
-  if (!options.noTimestamp && typeof payloadCopy.iat === "undefined") {
-    payloadCopy.iat = now;
-  }
-
-  if (options.expiresIn) {
-    const exp = now + parseTimespan(options.expiresIn);
-    payloadCopy.exp = exp;
-  }
-
-  if (options.notBefore) {
-    const nbf = now + parseTimespan(options.notBefore);
-    payloadCopy.nbf = nbf;
-  }
+  const header = buildHeader(algorithm, options);
+  const payloadCopy = buildPayload(payload, options);
 
   const encodedHeader = base64urlEncode(
     Buffer.from(JSON.stringify(header), "utf8")
@@ -289,29 +123,9 @@ export function verify(
     throw new JsonWebTokenError("Secret is required for HMAC verification");
   }
 
-  if (typeof token !== "string") {
-    throw new JsonWebTokenError("JWT must be a string");
-  }
-
-  const parts = token.split(".");
-  if (parts.length !== 3) {
-    throw new JsonWebTokenError("JWT malformed");
-  }
-
-  const [encodedHeader, encodedPayload, signature] = parts;
-
-  const header = safeJsonParse<JwtHeader>(
-    base64urlDecode(encodedHeader).toString("utf8")
-  );
-  const payload = safeJsonParse<JwtPayload>(
-    base64urlDecode(encodedPayload).toString("utf8")
-  );
+  const { encodedHeader, encodedPayload, signature, header, payload } = parseJwtToken(token);
 
   // Algorithm checks
-  if (!header.alg) {
-    throw new JsonWebTokenError("JWT header missing alg");
-  }
-
   if (!(header.alg in SUPPORTED_ALGS)) {
     throw new JsonWebTokenError("Unsupported algorithm: " + header.alg);
   }
@@ -331,73 +145,11 @@ export function verify(
     throw new JsonWebTokenError("Invalid signature");
   }
 
-  const now =
-    typeof options.clockTimestamp === "number"
-      ? options.clockTimestamp
-      : Math.floor(Date.now() / 1000);
+  // Validate time-based claims
+  validateTimeClaims(payload, options);
 
-  const tolerance = options.clockTolerance || 0;
-
-  // nbf (Not Before)
-  if (typeof payload.nbf !== "undefined") {
-    if (typeof payload.nbf !== "number") {
-      throw new JsonWebTokenError("Invalid nbf");
-    }
-    if (now + tolerance < payload.nbf) {
-      const date = new Date(payload.nbf * 1000);
-      throw new NotBeforeError("jwt not active", date);
-    }
-  }
-
-  // exp (Expiration)
-  if (typeof payload.exp !== "undefined") {
-    if (typeof payload.exp !== "number") {
-      throw new JsonWebTokenError("Invalid exp");
-    }
-    if (now - tolerance >= payload.exp) {
-      const date = new Date(payload.exp * 1000);
-      throw new TokenExpiredError("jwt expired", date);
-    }
-  }
-
-  // maxAge (extra constraint)
-  if (options.maxAge) {
-    if (typeof payload.iat !== "number") {
-      throw new JsonWebTokenError("iat required when using maxAge");
-    }
-    const maxAgeSeconds = parseTimespan(options.maxAge);
-    if (now - payload.iat > maxAgeSeconds + tolerance) {
-      const date = new Date((payload.iat + maxAgeSeconds) * 1000);
-      throw new TokenExpiredError("maxAge exceeded", date);
-    }
-  }
-
-  // iss
-  if (options.issuer) {
-    const validIssuers = Array.isArray(options.issuer)
-      ? options.issuer
-      : [options.issuer];
-    if (!validIssuers.includes(payload.iss as string)) {
-      throw new JsonWebTokenError("invalid issuer");
-    }
-  }
-
-  // sub
-  if (options.subject && payload.sub !== options.subject) {
-    throw new JsonWebTokenError("invalid subject");
-  }
-
-  // aud
-  if (options.audience) {
-    const audOption = options.audience;
-    const target = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-    const validAudiences = Array.isArray(audOption) ? audOption : [audOption];
-
-    const match = target.some((aud) => validAudiences.includes(aud as string));
-    if (!match) {
-      throw new JsonWebTokenError("invalid audience");
-    }
-  }
+  // Validate standard claims
+  validateStandardClaims(payload, options);
 
   return payload;
 }
@@ -440,9 +192,16 @@ export function decode(
   }
 }
 
-// Optional: grouped internals (if you still want this pattern)
-export const _internals = {
+// Re-export utilities for backward compatibility
+export { 
   base64urlEncode,
   base64urlDecode,
   parseTimespan,
+  JsonWebTokenError,
+  TokenExpiredError,
+  NotBeforeError,
+  JwtHeader,
+  JwtPayload,
+  DecodeOptions,
+  CompleteDecodedJwt
 };

@@ -7,9 +7,9 @@
 
 ### TODO
 
-[] HMAC
-[] Utils Segreation
-[] RSA
-[] API Expose
-[] Frontend Setup
-[] Frontend Integration
+- [x] HMAC
+- [x] Utils Segreation
+- [ ] RSA
+- [ ] API Expose
+- [ ] Frontend Setup
+- [ ] Frontend Integration
