@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { sign, verify } from "./models/jwt/rsa";
+import { sign, verify } from "./src/jwt/rsa";
 
 const privateKey = fs.readFileSync("keys/private.pem");
 const publicKey = fs.readFileSync("keys/public.pem");

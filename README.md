@@ -11,6 +11,7 @@
 - [x] Utils Segreation
 - [x] RSA
 - [ ] API Expose
+  - [ ] Database for storing users' credentials and secret message for testing purposes.
 - [ ] Frontend Setup
 - [ ] Frontend Integration
 - [ ] Refresh Token Functionality
