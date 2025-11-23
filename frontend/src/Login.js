@@ -112,7 +112,7 @@ export default function Login() {
         </div>
 
         <div className="small-label" style={{ marginTop: 4 }}>
-          Select signing algorithm for your JWT.
+          Select signing algorithm.
         </div>
       </div>
 

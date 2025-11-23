@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+  ReloadIcon, 
+  SpinnerIcon, 
+  ErrorIcon, 
+  ClockIcon, 
+  ExpiredIcon, 
+  CheckIcon, 
+  WarningIcon, 
+  HourglassIcon 
+} from "./components/Icons";
 
 function getCookie(name) {
   if (typeof document === "undefined") return null;
@@ -273,14 +283,32 @@ export default function Dashboard() {
     <div className="dashboard-card">
       <div className="dashboard-header">
         <div>
-          <div className="auth-title">JWT Dashboard</div>
-          <div className="auth-subtitle" onClick={logout}>
-            Logout
-          </div>
+          <div className="auth-title">Dashboard</div>
         </div>
-        <div className="pill">
-          {algo ? `Algorithm: ${algo}` : "No token loaded"}
-        </div>
+        <button
+          onClick={logout}
+          style={{
+            padding: "6px 12px",
+            fontSize: "14px",
+            borderRadius: "4px",
+            border: "1px solid #dc2626",
+            background: "rgba(239, 68, 68, 0.1)",
+            color: "#ef4444",
+            cursor: "pointer",
+            transition: "all 0.2s ease-in-out",
+            fontWeight: "500"
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = "rgba(239, 68, 68, 0.2)";
+            e.target.style.borderColor = "#ef4444";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = "rgba(239, 68, 68, 0.1)";
+            e.target.style.borderColor = "#dc2626";
+          }}
+        >
+          Logout
+        </button>
       </div>
 
       {token && (
@@ -322,7 +350,14 @@ export default function Dashboard() {
                   }
                 }}
               >
-                {(isLoading || isRetrying) ? "⟳" : "🔄 Reload"}
+                {(isLoading || isRetrying) ? (
+                  <SpinnerIcon size={12} />
+                ) : (
+                  <>
+                    <ReloadIcon size={12} style={{ marginRight: '4px' }} />
+                    Reload
+                  </>
+                )}
               </button>
             </div>
             <div className="code-block" style={{ marginTop: 6, minHeight: "40px", display: "flex", alignItems: "center" }}>
@@ -334,8 +369,9 @@ export default function Dashboard() {
                   </span>
                 </div>
               ) : error ? (
-                <div style={{ color: "#ef4444", fontSize: "14px", padding: "8px" }}>
-                  ❌ {error}
+                <div style={{ color: "#ef4444", fontSize: "14px", padding: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <ErrorIcon size={16} />
+                  {error}
                 </div>
               ) : secretMessage ? (
                 secretMessage
@@ -344,11 +380,18 @@ export default function Dashboard() {
               )}
             </div>
             {(isRefreshing || isRetrying) && (
-              <div className="small-label" style={{ marginTop: 4, color: "#f59e0b" }}>
-                {isRetrying ? 
-                  "⏳ Token expired, waiting to refresh..." : 
-                  "🔄 Refreshing access token..."
-                }
+              <div className="small-label" style={{ marginTop: 4, color: "#f59e0b", display: "flex", alignItems: "center", gap: "6px" }}>
+                {isRetrying ? (
+                  <>
+                    <HourglassIcon size={12} />
+                    Token expired, waiting to refresh...
+                  </>
+                ) : (
+                  <>
+                    <SpinnerIcon size={12} />
+                    Refreshing access token...
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -368,21 +411,33 @@ export default function Dashboard() {
                 fontSize: "12px", 
                 opacity: 0.8, 
                 color: getTimeUntilExpiration(expiresAtRaw) === "Expired" ? "#ef4444" : "#fbbf24",
-                fontWeight: "500"
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
               }}>
-                {getTimeUntilExpiration(expiresAtRaw) === "Expired" ? 
-                  "🔴 Expired" : 
-                  `⏰ Expires in ${getTimeUntilExpiration(expiresAtRaw)}`
-                }
+                {getTimeUntilExpiration(expiresAtRaw) === "Expired" ? (
+                  <>
+                    <ExpiredIcon size={12} />
+                    Expired
+                  </>
+                ) : (
+                  <>
+                    <ClockIcon size={12} />
+                    Expires in {getTimeUntilExpiration(expiresAtRaw)}
+                  </>
+                )}
               </div>
             )}
             {hasRefreshToken ? (
-              <div className="small-label" style={{ fontSize: "12px", opacity: 0.7, color: "#059669" }}>
-                ✓ Refresh token available
+              <div className="small-label" style={{ fontSize: "12px", opacity: 0.7, color: "#059669", display: "flex", alignItems: "center", gap: "4px" }}>
+                <CheckIcon size={12} />
+                Refresh token available
               </div>
             ) : (
-              <div className="small-label" style={{ fontSize: "12px", opacity: 0.7, color: "#ef4444" }}>
-                ⚠️ No refresh token - relogin required when token expires
+              <div className="small-label" style={{ fontSize: "12px", opacity: 0.7, color: "#ef4444", display: "flex", alignItems: "center", gap: "4px" }}>
+                <WarningIcon size={12} />
+                No refresh token - relogin required when token expires
               </div>
             )}
           </div>

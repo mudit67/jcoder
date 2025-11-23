@@ -17,17 +17,7 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
   return null;
 }
-function Brand() {
-  return (
-    <div className="top-row">
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 700 }}>AuthLab</div>
-        <div style={{ fontSize: 11, color: "#9ca3af" }}>Minimal JWT</div>
-      </div>
-      <div className="badge">Demo</div>
-    </div>
-  );
-}
+
 
 export default function App() {
   return (
@@ -51,7 +41,6 @@ export default function App() {
             ) : (
               <div className="auth-root">
                 <div className="auth-card">
-                  <Brand />
                   <SignUp />
                   <div className="link-row">
                     Already have an account?{" "}
@@ -69,7 +58,6 @@ export default function App() {
           element={
             <div className="auth-root">
               <div className="auth-card">
-                <Brand />
                 <Login />
                 <div className="link-row">
                   New here?{" "}
