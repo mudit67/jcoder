@@ -35,6 +35,7 @@ export interface LoginResponse {
 
 export interface RefreshTokenRequestBody {
   refreshToken: string;
+  originalExpiresIn?: string;
 }
 
 export interface RefreshTokenResponse {

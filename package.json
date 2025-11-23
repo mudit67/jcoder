@@ -28,7 +28,9 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "better-sqlite3": "^12.4.6",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
   }

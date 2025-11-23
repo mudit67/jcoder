@@ -169,7 +169,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
  * Refresh access token using refresh token
  */
 export const refreshToken = async (req: Request<{}, ApiResponse<RefreshTokenResponse>, RefreshTokenRequestBody>, res: Response): Promise<Response> => {
-  const { refreshToken: clientRefreshToken } = req.body;
+  const { refreshToken: clientRefreshToken, originalExpiresIn } = req.body;
 
   if (!clientRefreshToken) {
     return res.status(400).json({
@@ -185,15 +185,15 @@ export const refreshToken = async (req: Request<{}, ApiResponse<RefreshTokenResp
       return res.status(401).json({ error: "Invalid or expired refresh token" });
     }
 
-    // Default settings for new access token
+    // Use original expiration or default to 1h
     const algorithm = 'HS256';
-    const expiresIn = '1h'; // Shorter expiry for access tokens
+    const expiresIn = originalExpiresIn || '1h';
     
     // Calculate expiration timestamp
     const issuedAt = new Date();
     const expiresAt = calculateExpirationTimestamp(expiresIn);
 
-    // Generate new access token
+    // Generate new access token with same expiration as original
     const accessToken = JwtService.sign(
       { 
         userId: userInfo.userId,
@@ -307,7 +307,7 @@ export const getAlgorithms = (req: Request, res: Response): Response => {
         expirationOptions,
         defaultExpiration: "24h",
         expirationFormats: {
-          "examples": ["15m", "1h", "24h", "7d", "30d"],
+          "examples": ["5", "10", "15m", "1h", "24h", "7d", "30d"],
           "units": {
             "s": "seconds",
             "m": "minutes", 

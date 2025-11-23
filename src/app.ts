@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { initializeRefreshTokensTable } from "./db/refreshTokensInit";
@@ -11,6 +12,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors({
+  origin: "*", // Allow all origins
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false // Set to false when allowing all origins
+}));
 app.use(express.json());
 
 // Routes

@@ -1,13 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+function setCookie(name, value, days = 30) {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/; SameSite=Strict; Secure=${window.location.protocol === 'https:'}`;
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [algo, setAlgo] = useState("HMAC"); // "HMAC" or "RSA"
+  const [algo, setAlgo] = useState("HS256"); // Default to HS256
   const [useRefresh, setUseRefresh] = useState(false);
-  const [expiresIn, setExpiresIn] = useState("3600");
+  const [expiresIn, setExpiresIn] = useState("1h"); // Use time format instead of seconds
+  const [customExpiration, setCustomExpiration] = useState("");
+  const [useCustomExpiration, setUseCustomExpiration] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -17,13 +25,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("http:localhost:3000/api/login", {
+      const res = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username,
           password,
           algorithm: algo,
+          expiresIn: useCustomExpiration ? customExpiration : expiresIn,
           issueRefreshToken: useRefresh,
         }),
       });
@@ -33,8 +42,18 @@ export default function Login() {
         throw new Error(data.message || "Login failed");
       }
       const result = await res.json();
-      localStorage.setItem("accessToken", result.token);
-      localStorage.setItem("data", JSON.stringify({"username":result.data.username, "issuedAt":result.issuedAt}))
+      localStorage.setItem("accessToken", result.data.accessToken);
+      localStorage.setItem("data", JSON.stringify({
+        "username": result.data.user.username, 
+        "issuedAt": result.data.issuedAt,
+        "expiresAt": result.data.expiresAt,
+        "originalExpiresIn": useCustomExpiration ? customExpiration : expiresIn
+      }));
+      
+      // Store refresh token in HTTP cookie if provided
+      if (result.data.refreshToken) {
+        setCookie("refreshToken", result.data.refreshToken, 30);
+      }
 
       navigate("/dashboard");
     } catch (err) {
@@ -98,18 +117,56 @@ export default function Login() {
       </div>
 
       <div>
-        <div className="label">Expires In (seconds)</div>
-        <input
-          className="input"
-          type="number"
-          placeholder="3600"
-          min={1}
-          value={expiresIn}
-          onChange={(e) => setExpiresIn(e.target.value)}
-          required
-        />
+        <div className="label">Expires In</div>
+        <div className="algo-toggle" style={{ marginBottom: "12px", gridTemplateColumns: "1fr 1fr" }}>
+          <button
+            type="button"
+            className={`algo-btn ${!useCustomExpiration ? "active" : ""}`}
+            onClick={() => setUseCustomExpiration(false)}
+          >
+            Preset
+          </button>
+          <button
+            type="button"
+            className={`algo-btn ${useCustomExpiration ? "active" : ""}`}
+            onClick={() => setUseCustomExpiration(true)}
+          >
+            Custom
+          </button>
+        </div>
+        
+        {!useCustomExpiration ? (
+          <select 
+            className="input"
+            value={expiresIn}
+            onChange={(e) => setExpiresIn(e.target.value)}
+            required
+          >
+            <option value="5">5 seconds</option>
+            <option value="10">10 seconds</option>
+            <option value="15m">15 minutes</option>
+            <option value="1h">1 hour</option>
+            <option value="24h">24 hours</option>
+            <option value="7d">7 days</option>
+            <option value="30d">30 days</option>
+          </select>
+        ) : (
+          <input
+            className="input"
+            type="number"
+            placeholder="3600 (1 hour)"
+            min="1"
+            value={customExpiration}
+            onChange={(e) => setCustomExpiration(e.target.value)}
+            required
+          />
+        )}
+        
         <div className="small-label" style={{ marginTop: 4 }}>
-          How long the access token should be valid (e.g., 3600 = 1 hour)
+          {useCustomExpiration 
+            ? "Enter expiration time in seconds (e.g., 3600 = 1 hour)"
+            : "Select how long the access token should be valid"
+          }
         </div>
       </div>
 

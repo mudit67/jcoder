@@ -5,9 +5,9 @@ import userRoutes from "./userRoutes";
 const router = Router();
 
 // Mount auth routes (authentication and algorithms)
-router.use("/", authRoutes);
+router.use("/auth", authRoutes);
 
-// Mount user routes (profile and user data)
-router.use("/", userRoutes);
+// Mount user routes (profile and user data)  
+router.use("/user", userRoutes);
 
 export default router;
