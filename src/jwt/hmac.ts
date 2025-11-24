@@ -22,7 +22,6 @@ import {
   parseJwtToken,
 } from "./utils";
 
-// Map JWT alg → Node crypto HMAC algorithm
 const SUPPORTED_ALGS = {
   HS256: "sha256",
   HS384: "sha384",
@@ -67,7 +66,6 @@ function timingSafeEqualStr(a: string, b: string): boolean {
   const bBuf = Buffer.from(b);
 
   if (aBuf.length !== bBuf.length) {
-    // still run timingSafeEqual with same length to avoid early return timing leaks
     const min = Math.min(aBuf.length, bBuf.length);
     const aSlice = aBuf.slice(0, min);
     const bSlice = bBuf.slice(0, min);
@@ -125,7 +123,6 @@ export function verify(
 
   const { encodedHeader, encodedPayload, signature, header, payload } = parseJwtToken(token);
 
-  // Algorithm checks
   if (!(header.alg in SUPPORTED_ALGS)) {
     throw new JsonWebTokenError("Unsupported algorithm: " + header.alg);
   }
@@ -137,7 +134,6 @@ export function verify(
     throw new JsonWebTokenError("Invalid algorithm: " + header.alg);
   }
 
-  // Verify signature
   const signingInput = encodedHeader + "." + encodedPayload;
   const expectedSig = createSignature(header.alg, secret, signingInput);
 
@@ -145,10 +141,7 @@ export function verify(
     throw new JsonWebTokenError("Invalid signature");
   }
 
-  // Validate time-based claims
   validateTimeClaims(payload, options);
-
-  // Validate standard claims
   validateStandardClaims(payload, options);
 
   return payload;
@@ -192,7 +185,6 @@ export function decode(
   }
 }
 
-// Re-export utilities for backward compatibility
 export { 
   base64urlEncode,
   base64urlDecode,

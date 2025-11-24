@@ -9,10 +9,8 @@ if (!fs.existsSync(dbPath)) {
 
 const dbFile = path.join(dbPath, "app.sqlite");
 
-// Open DB (creates file if not exists)
 const db = new Database(dbFile);
 
-// Initialize schema
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

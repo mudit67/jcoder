@@ -7,12 +7,10 @@ import { SecretMessageResponse, ApiResponse, User } from "../types";
  */
 export const getSecretMessage = async (req: Request<{}, ApiResponse<SecretMessageResponse>>, res: Response): Promise<Response> => {
   try {
-    // req.user is set by the authenticateToken middleware
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Get user's secret message and creation time from database
     const user = db.prepare("SELECT username, secret_message, created_at FROM users WHERE id = ?")
       .get(req.user.userId) as { username: string; secret_message: string; created_at: string } | undefined;
 

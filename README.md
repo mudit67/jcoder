@@ -23,11 +23,11 @@ A complete JWT-based authentication system built with TypeScript, Express.js, an
 - Automatic database initialization
 - Proper indexing and foreign key constraints
 
-## 🔐 Refresh Token System
+## Refresh Token System
 
 The API implements a secure refresh token system with the following features:
 
-### ✨ Key Features
+### Key Features
 - **Optional Refresh Tokens**: Only issued when `issueRefreshToken: true` is provided during login
 - **Separate Secret**: Refresh tokens are signed with a different secret (`REFRESH_TOKEN_SECRET`) than access tokens
 - **Smart Expiration**: Refresh tokens expire 30x longer than access tokens, with a minimum of 30 minutes
@@ -40,14 +40,14 @@ The API implements a secure refresh token system with the following features:
 - If access token expires in 15 minutes → refresh token expires in 30 minutes (minimum)
 - If access token expires in 24 hours → refresh token expires in 30 days
 
-### 🔒 Security Features
+### Security Features
 - Refresh tokens use `HS256` algorithm with separate secret
 - Token hashes stored in database for secure validation
 - Automatic cleanup of expired tokens
 - Multi-device logout support
 - Token rotation prevents replay attacks
 
-### 📋 Environment Variables
+### Environment Variables
 ```env
 JWT_SECRET='your-access-token-secret'
 REFRESH_TOKEN_SECRET='your-refresh-token-secret'

@@ -34,7 +34,6 @@ export function base64urlDecode(str: string): Buffer {
 export function parseTimespan(value: number | string): number {
   if (typeof value === "number") return value;
   if (typeof value === "string" && /^\d+$/.test(value)) {
-    // plain number in seconds
     return parseInt(value, 10);
   }
 
@@ -168,7 +167,6 @@ export function validateTimeClaims(
 
   const tolerance = options.clockTolerance || 0;
 
-  // nbf (Not Before)
   if (typeof payload.nbf !== "undefined") {
     if (typeof payload.nbf !== "number") {
       throw new JsonWebTokenError("Invalid nbf");
@@ -179,7 +177,6 @@ export function validateTimeClaims(
     }
   }
 
-  // exp (Expiration)
   if (typeof payload.exp !== "undefined") {
     if (typeof payload.exp !== "number") {
       throw new JsonWebTokenError("Invalid exp");
@@ -190,7 +187,6 @@ export function validateTimeClaims(
     }
   }
 
-  // maxAge (extra constraint)
   if (options.maxAge) {
     if (typeof payload.iat !== "number") {
       throw new JsonWebTokenError("iat required when using maxAge");
@@ -209,8 +205,7 @@ export function validateTimeClaims(
 export function validateStandardClaims(
   payload: JwtPayload,
   options: BaseVerifyOptions = {}
-): void {
-  // iss
+) {
   if (options.issuer) {
     const validIssuers = Array.isArray(options.issuer)
       ? options.issuer
@@ -220,12 +215,10 @@ export function validateStandardClaims(
     }
   }
 
-  // sub
   if (options.subject && payload.sub !== options.subject) {
     throw new JsonWebTokenError("invalid subject");
   }
 
-  // aud
   if (options.audience) {
     const audOption = options.audience;
     const target = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
@@ -250,7 +243,6 @@ export function buildPayload(
       ? options.clockTimestamp
       : Math.floor(Date.now() / 1000);
 
-  // Clone payload so we don't mutate the original
   const payloadCopy: JwtPayload =
     typeof payload === "object" && payload !== null
       ? { ...payload }
@@ -260,7 +252,6 @@ export function buildPayload(
     throw new JsonWebTokenError("Payload must be a non-null object");
   }
 
-  // Set standard claims from options if not already present
   if (options.issuer) payloadCopy.iss = options.issuer;
   if (options.subject) payloadCopy.sub = options.subject;
   if (options.audience) payloadCopy.aud = options.audience;

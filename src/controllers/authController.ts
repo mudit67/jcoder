@@ -19,7 +19,6 @@ import {
 export const signup = async (req: Request<{}, ApiResponse<UserResponse>, SignupRequestBody>, res: Response): Promise<Response> => {
   const { username, password, secretMessage } = req.body;
 
-  // Basic validation
   if (!username || !password || !secretMessage) {
     return res.status(400).json({
       error: "username, password and secretMessage are required",

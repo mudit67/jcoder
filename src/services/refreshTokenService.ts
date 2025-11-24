@@ -8,26 +8,19 @@ import { JwtService, parseExpiresIn } from "./jwtService";
  * Minimum 30 minutes, otherwise 30x the access token duration
  */
 export function calculateRefreshTokenExpiration(accessTokenExpiresIn: string): string {
-  // Parse access token duration in seconds
   const accessTokenSeconds = parseExpiresIn(accessTokenExpiresIn);
   
-  // Calculate refresh token duration (30x access token)
   const refreshTokenSeconds = accessTokenSeconds * 30;
   
-  // Ensure minimum 30 minutes (1800 seconds)
   const finalSeconds = Math.max(refreshTokenSeconds, 1800);
   
-  // Convert back to string format
   if (finalSeconds >= 86400) {
-    // Days
     const days = Math.floor(finalSeconds / 86400);
     return `${days}d`;
   } else if (finalSeconds >= 3600) {
-    // Hours
     const hours = Math.floor(finalSeconds / 3600);
     return `${hours}h`;
   } else {
-    // Minutes
     const minutes = Math.floor(finalSeconds / 60);
     return `${minutes}m`;
   }
@@ -44,7 +37,6 @@ export function generateRefreshToken(userId: number, username: string, accessTok
   
   const refreshTokenExpiration = calculateRefreshTokenExpiration(accessTokenExpiresIn);
   
-  // Use HMAC with separate secret for refresh tokens
   return JwtService.signWithCustomSecret(
     {
       userId,
@@ -93,14 +85,12 @@ export function validateRefreshToken(token: string): { userId: number; username:
       throw new Error('REFRESH_TOKEN_SECRET environment variable is required');
     }
     
-    // Verify JWT signature and expiration
     const payload = JwtService.verifyWithCustomSecret(token, refreshTokenSecret);
     
     if (payload.type !== 'refresh') {
       return null;
     }
     
-    // Also check if token exists in database (for revocation support)
     const tokenHash = hashRefreshToken(token);
     const dbResult = db.prepare(`
       SELECT user_id FROM refresh_tokens 
@@ -167,13 +157,10 @@ export function rotateRefreshToken(oldToken: string, userId: number, accessToken
     return null;
   }
   
-  // Revoke old token
   revokeRefreshToken(oldToken);
   
-  // Generate new token with proper expiration
   const newToken = generateRefreshToken(userId, userInfo.username, accessTokenExpiresIn);
   
-  // Calculate expiration for database storage
   const refreshExpiration = calculateRefreshTokenExpiration(accessTokenExpiresIn);
   const expirationSeconds = parseExpiresIn(refreshExpiration);
   const expirationDays = Math.ceil(expirationSeconds / 86400);

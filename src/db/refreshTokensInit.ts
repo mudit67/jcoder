@@ -5,7 +5,6 @@ import db from "../db";
  */
 export function initializeRefreshTokensTable(): void {
   try {
-    // Create refresh_tokens table if it doesn't exist
     db.exec(`
       CREATE TABLE IF NOT EXISTS refresh_tokens (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,19 +16,16 @@ export function initializeRefreshTokensTable(): void {
       )
     `);
 
-    // Create index for faster lookups
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash 
       ON refresh_tokens (token_hash)
     `);
 
-    // Create index for cleanup operations
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires 
       ON refresh_tokens (expires_at)
     `);
 
-    // Create index for user-based operations
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user 
       ON refresh_tokens (user_id)

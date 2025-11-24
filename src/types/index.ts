@@ -1,4 +1,3 @@
-// Request body types
 export interface SignupRequestBody {
   username: string;
   password: string;
@@ -13,7 +12,6 @@ export interface LoginRequestBody {
   issueRefreshToken?: boolean;
 }
 
-// Response types
 export interface UserResponse {
   username: string;
   secretMessage: string;
@@ -60,7 +58,6 @@ export interface ApiResponse<T = any> {
   data?: T;
 }
 
-// Database types
 export interface User {
   id: number;
   username: string;

@@ -21,7 +21,6 @@ import {
   parseJwtToken,
 } from "./utils";
 
-// Map JWT alg → Node crypto RSA algorithm
 const SUPPORTED_ALGS = {
   RS256: "RSA-SHA256",
   RS384: "RSA-SHA384",
@@ -128,7 +127,6 @@ export function verify(
   const { encodedHeader, encodedPayload, signature, header, payload } =
     parseJwtToken(token);
 
-  // Algorithm checks
   if (!(header.alg in SUPPORTED_ALGS)) {
     throw new JsonWebTokenError("Unsupported algorithm: " + header.alg);
   }
@@ -140,7 +138,6 @@ export function verify(
     throw new JsonWebTokenError("Invalid algorithm: " + header.alg);
   }
 
-  // Verify signature
   const signingInput = encodedHeader + "." + encodedPayload;
   const isValid = verifySignature(header.alg, publicKey, signingInput, signature);
 
@@ -148,10 +145,7 @@ export function verify(
     throw new JsonWebTokenError("Invalid signature");
   }
 
-  // Validate time-based claims
   validateTimeClaims(payload, options);
-
-  // Validate standard claims
   validateStandardClaims(payload, options);
 
   return payload;
@@ -195,7 +189,6 @@ export function decode(
   }
 }
 
-// Re-export common types/errors if you want the same public API shape as HMAC
 export {
   JsonWebTokenError,
   TokenExpiredError,

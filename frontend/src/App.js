@@ -43,7 +43,7 @@ export default function App() {
                 <div className="auth-card">
                   <SignUp />
                   <div className="link-row">
-                    Already have an account?{" "}
+                    Already have an account?
                     <Link to="/login" className="link">
                       Log in
                     </Link>
@@ -60,7 +60,7 @@ export default function App() {
               <div className="auth-card">
                 <Login />
                 <div className="link-row">
-                  New here?{" "}
+                  New here?
                   <Link to="/signup" className="link">
                     Create an account
                   </Link>
@@ -72,12 +72,9 @@ export default function App() {
         <Route
           path="/dashboard"
           element={
-            // getCookie("accessToken") ? (
             <div className="auth-root">
               <Dashboard />
             </div>
-            // ) : 
-            //  <Navigate to="/login" replace />
           }
         />
   

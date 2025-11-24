@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { JwtService } from "../services/jwtService";
 import { JwtPayload } from "../jwt/utils";
 
-// Extend Request interface to include user
 declare global {
   namespace Express {
     interface Request {
@@ -27,7 +26,6 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    // Get available algorithms for verification
     const availableAlgorithms = JwtService.getAvailableAlgorithms();
 
     const payload = JwtService.verify(token, {
@@ -35,7 +33,6 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
       issuer: "jcoder-api",
     }) as JwtPayload & { userId: number; username: string; type?: string };
 
-    // Ensure this is an access token (not a refresh token)
     if (payload.type && payload.type !== 'access') {
       res.status(401).json({ error: "Invalid token type" });
       return;

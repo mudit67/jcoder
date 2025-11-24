@@ -16,7 +16,6 @@ export interface JwtSignOptions {
  * Validate expiration duration format
  */
 export function validateExpiresIn(expiresIn: string): boolean {
-  // Allow formats like: "1h", "30m", "24h", "7d", "1y", or plain numbers (seconds)
   const timeRegex = /^(\d+)([smhdy]?)$/;
   return timeRegex.test(expiresIn);
 }
@@ -107,7 +106,6 @@ export class JwtService {
     const { algorithm, expiresIn = "24h", issuer = "jcoder-api" } = options;
 
     if (algorithm.startsWith('HS')) {
-      // HMAC algorithms with custom secret
       return hmacSign(payload, secret, {
         algorithm: algorithm as 'HS256' | 'HS384' | 'HS512',
         expiresIn,
@@ -124,7 +122,6 @@ export class JwtService {
   static verifyWithCustomSecret(token: string, secret: string, options: JwtVerifyOptions = {}): JwtPayload {
     const { algorithms = ['HS256'], issuer = "jcoder-refresh" } = options;
 
-    // Try to decode the token to get the algorithm from header
     const parts = token.split('.');
     if (parts.length !== 3) {
       throw new Error("Invalid token format");
@@ -140,7 +137,6 @@ export class JwtService {
     }
 
     if (tokenAlgorithm.startsWith('HS')) {
-      // HMAC algorithms with custom secret
       return hmacVerify(token, secret, {
         algorithms: [tokenAlgorithm],
         issuer,
@@ -157,7 +153,6 @@ export class JwtService {
     const { algorithm, expiresIn = "24h", issuer = "jcoder-api" } = options;
 
     if (algorithm.startsWith('HS')) {
-      // HMAC algorithms
       const secret = this.getHmacSecret();
       return hmacSign(payload, secret, {
         algorithm: algorithm as 'HS256' | 'HS384' | 'HS512',
@@ -165,7 +160,6 @@ export class JwtService {
         issuer,
       });
     } else if (algorithm.startsWith('RS')) {
-      // RSA algorithms
       const { privateKey } = this.getRsaKeys();
       return rsaSign(payload, privateKey, {
         algorithm: algorithm as 'RS256' | 'RS384' | 'RS512',
@@ -183,7 +177,6 @@ export class JwtService {
   static verify(token: string, options: JwtVerifyOptions): JwtPayload {
     const { algorithms = ['HS256'], issuer = "jcoder-api" } = options;
 
-    // Try to decode the token to get the algorithm from header
     const parts = token.split('.');
     if (parts.length !== 3) {
       throw new Error("Invalid token format");
@@ -199,14 +192,12 @@ export class JwtService {
     }
 
     if (tokenAlgorithm.startsWith('HS')) {
-      // HMAC algorithms
       const secret = this.getHmacSecret();
       return hmacVerify(token, secret, {
         algorithms: [tokenAlgorithm],
         issuer,
       });
     } else if (tokenAlgorithm.startsWith('RS')) {
-      // RSA algorithms
       const { publicKey } = this.getRsaKeys();
       return rsaVerify(token, publicKey, {
         algorithms: [tokenAlgorithm],
@@ -223,17 +214,14 @@ export class JwtService {
   static getAvailableAlgorithms(): JwtAlgorithm[] {
     const available: JwtAlgorithm[] = [];
 
-    // Check HMAC availability
     if (process.env.JWT_SECRET) {
       available.push('HS256', 'HS384', 'HS512');
     }
 
-    // Check RSA availability
     try {
       this.getRsaKeys();
       available.push('RS256', 'RS384', 'RS512');
     } catch {
-      // RSA keys not available
     }
 
     return available;
