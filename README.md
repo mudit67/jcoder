@@ -99,5 +99,5 @@ POST /api/auth/login
   - [x] Secret message route
 - [x] Refresh Token Functionality
   - [x] Optional refresh token issuance based on user preference
-- [ ] Frontend Setup
-- [ ] Frontend Integration
+- [x] Frontend Setup
+- [x] Frontend Integration
